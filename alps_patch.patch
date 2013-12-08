@@ -1,0 +1,35 @@
+--- ../../../drivers/input/mouse/alps.c	2011-06-25 14:32:07.000000000 +0300
++++ source/drivers/input/mouse/alps.c	2011-06-29 01:08:15.000000000 +0300
+@@ -350,6 +568,7 @@ static int alps_tap_mode(struct psmouse
+ 	struct ps2dev *ps2dev = &psmouse->ps2dev;
+ 	int cmd = enable ? PSMOUSE_CMD_SETRATE : PSMOUSE_CMD_SETRES;
+ 	unsigned char tap_arg = enable ? 0x0A : 0x00;
++	unsigned char tap_arg2 = enable ? 0x14 : 0x0A;
+ 	unsigned char param[4];
+ 
+ 	if (ps2_command(ps2dev, param, PSMOUSE_CMD_GETINFO) ||
+@@ -358,6 +577,12 @@ static int alps_tap_mode(struct psmouse
+ 	    ps2_command(ps2dev, &tap_arg, cmd))
+ 		return -1;
+ 
++	if (ps2_command(ps2dev,  NULL, PSMOUSE_CMD_SETSCALE11) ||
++	    ps2_command(ps2dev,  NULL, PSMOUSE_CMD_SETSCALE11) ||
++	    ps2_command(ps2dev,  NULL, PSMOUSE_CMD_SETSCALE11) ||
++	    ps2_command(ps2dev, &tap_arg2, PSMOUSE_CMD_SETRATE))
++		return -1;
++
+ 	if (alps_get_status(psmouse, param))
+ 		return -1;
+ 
+@@ -411,8 +636,9 @@ static int alps_hw_init(struct psmouse *
+ 		return -1;
+ 	}
+ 
+-	if (alps_tap_mode(psmouse, true)) {
+-		printk(KERN_WARNING "alps.c: Failed to enable hardware tapping\n");
++	dbg("setting tap mode for mouse 0x%p", (void*)psmouse);
++	if (alps_tap_mode(psmouse, false)) {
++		printk(KERN_WARNING "alps.c: Failed to disable hardware tapping\n");
+ 		return -1;
+ 	}
+ 
